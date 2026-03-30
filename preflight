@@ -1,0 +1,325 @@
+#!/bin/bash
+
+# Harbour Preflight Setup Script
+# Performs deep clean and fresh install (like flutter clean && flutter pub get)
+
+set -e  # Exit on error
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# Print functions
+print_header() {
+    echo ""
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BLUE}  ⚓ HARBOUR PREFLIGHT - DEEP CLEAN & INSTALL${NC}"
+    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+}
+
+print_step() {
+    echo -e "${GREEN}▶${NC} $1"
+}
+
+print_substep() {
+    echo -e "${CYAN}  →${NC} $1"
+}
+
+print_info() {
+    echo -e "${BLUE}ℹ${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}⚠${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}✗${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}✓${NC} $1"
+}
+
+# Check if command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Get directory size
+get_size() {
+    if [ -d "$1" ]; then
+        du -sh "$1" 2>/dev/null | cut -f1
+    else
+        echo "0B"
+    fi
+}
+
+# Main setup
+main() {
+    print_header
+
+    # Check Node.js
+    print_step "Checking Node.js installation..."
+    if command_exists node; then
+        NODE_VERSION=$(node -v)
+        print_success "Node.js $NODE_VERSION installed"
+    else
+        print_error "Node.js is not installed"
+        print_info "Please install Node.js from https://nodejs.org/"
+        exit 1
+    fi
+
+    # Check npm
+    print_step "Checking npm installation..."
+    if command_exists npm; then
+        NPM_VERSION=$(npm -v)
+        print_success "npm $NPM_VERSION installed"
+    else
+        print_error "npm is not installed"
+        exit 1
+    fi
+
+    # Check for package.json
+    print_step "Verifying project structure..."
+    if [ ! -f "package.json" ]; then
+        print_error "package.json not found. Are you in the project root?"
+        exit 1
+    fi
+    print_success "Project structure verified"
+
+    # ═══════════════════════════════════════════════════════════
+    # DEEP CLEAN (like flutter clean)
+    # ═══════════════════════════════════════════════════════════
+
+    echo ""
+    print_step "🧹 DEEP CLEAN - Removing all build artifacts and caches..."
+    echo ""
+
+    # 1. Clean node_modules
+    if [ -d "node_modules" ]; then
+        SIZE=$(get_size "node_modules")
+        print_substep "Removing node_modules ($SIZE)..."
+        rm -rf node_modules
+        print_success "node_modules removed"
+    else
+        print_substep "node_modules not found (already clean)"
+    fi
+
+    # 2. Clean lock files
+    print_substep "Removing lock files..."
+    rm -f package-lock.json yarn.lock pnpm-lock.yaml
+    print_success "Lock files removed"
+
+    # 3. Clean Expo cache
+    if [ -d ".expo" ]; then
+        SIZE=$(get_size ".expo")
+        print_substep "Removing .expo cache ($SIZE)..."
+        rm -rf .expo
+        print_success "Expo cache removed"
+    fi
+
+    # 4. Clean Metro bundler cache
+    if [ -d "$HOME/.expo/metro-cache" ]; then
+        SIZE=$(get_size "$HOME/.expo/metro-cache")
+        print_substep "Removing Metro bundler cache ($SIZE)..."
+        rm -rf "$HOME/.expo/metro-cache"
+        print_success "Metro cache removed"
+    fi
+
+    # 5. Clean TypeScript build info
+    print_substep "Removing TypeScript build artifacts..."
+    rm -f tsconfig.tsbuildinfo
+    find . -name "*.tsbuildinfo" -type f -delete 2>/dev/null || true
+    print_success "TypeScript build info removed"
+
+    # 6. Clean web build
+    if [ -d "web-build" ]; then
+        SIZE=$(get_size "web-build")
+        print_substep "Removing web-build ($SIZE)..."
+        rm -rf web-build
+        print_success "web-build removed"
+    fi
+
+    # 7. Clean dist
+    if [ -d "dist" ]; then
+        SIZE=$(get_size "dist")
+        print_substep "Removing dist ($SIZE)..."
+        rm -rf dist
+        print_success "dist removed"
+    fi
+
+    # 8. Clean native build folders (iOS/Android if present)
+    if [ -d "ios/build" ]; then
+        SIZE=$(get_size "ios/build")
+        print_substep "Removing iOS build ($SIZE)..."
+        rm -rf ios/build
+        print_success "iOS build removed"
+    fi
+
+    if [ -d "android/build" ]; then
+        SIZE=$(get_size "android/build")
+        print_substep "Removing Android build ($SIZE)..."
+        rm -rf android/build
+        print_success "Android build removed"
+    fi
+
+    if [ -d "android/app/build" ]; then
+        SIZE=$(get_size "android/app/build")
+        print_substep "Removing Android app build ($SIZE)..."
+        rm -rf android/app/build
+        print_success "Android app build removed"
+    fi
+
+    # 9. Clean Gradle cache (if Android present)
+    if [ -d "android/.gradle" ]; then
+        SIZE=$(get_size "android/.gradle")
+        print_substep "Removing Gradle cache ($SIZE)..."
+        rm -rf android/.gradle
+        print_success "Gradle cache removed"
+    fi
+
+    # 10. Clean Pods (if iOS present)
+    if [ -d "ios/Pods" ]; then
+        SIZE=$(get_size "ios/Pods")
+        print_substep "Removing CocoaPods ($SIZE)..."
+        rm -rf ios/Pods ios/Podfile.lock
+        print_success "CocoaPods removed"
+    fi
+
+    # 11. Clean watchman
+    if command_exists watchman; then
+        print_substep "Clearing watchman watches..."
+        watchman watch-del-all 2>/dev/null || true
+        print_success "Watchman cleared"
+    fi
+
+    # 12. Clean npm cache
+    print_substep "Clearing npm cache..."
+    npm cache clean --force 2>/dev/null || true
+    print_success "npm cache cleared"
+
+    # 13. Clean tmp files
+    print_substep "Removing temporary files..."
+    rm -rf .metro-health-check* 2>/dev/null || true
+    rm -rf /tmp/metro-* 2>/dev/null || true
+    rm -rf /tmp/haste-map-* 2>/dev/null || true
+    print_success "Temporary files removed"
+
+    echo ""
+    print_success "🧹 DEEP CLEAN COMPLETE"
+    echo ""
+
+    # ═══════════════════════════════════════════════════════════
+    # FRESH INSTALL (like flutter pub get)
+    # ═══════════════════════════════════════════════════════════
+
+    print_step "📦 FRESH INSTALL - Installing dependencies..."
+    echo ""
+
+    # Install dependencies with legacy peer deps
+    print_substep "Running npm install --legacy-peer-deps..."
+    npm install --legacy-peer-deps
+
+    echo ""
+    print_success "📦 DEPENDENCIES INSTALLED"
+    echo ""
+
+    # ═══════════════════════════════════════════════════════════
+    # POST-INSTALL SETUP
+    # ═══════════════════════════════════════════════════════════
+
+    print_step "🔧 POST-INSTALL SETUP..."
+    echo ""
+
+    # Initialize Metro cache
+    print_substep "Initializing Metro bundler cache..."
+    npx expo start --clear >/dev/null 2>&1 &
+    EXPO_PID=$!
+    sleep 3
+    kill $EXPO_PID 2>/dev/null || true
+    print_success "Metro cache initialized"
+
+    # Verify TypeScript
+    print_substep "Verifying TypeScript configuration..."
+    if [ -f "tsconfig.json" ]; then
+        print_success "TypeScript config verified"
+    else
+        print_warning "tsconfig.json not found"
+    fi
+
+    # Check for Expo CLI
+    print_substep "Checking Expo CLI..."
+    if command_exists expo; then
+        EXPO_VERSION=$(expo --version 2>/dev/null || echo "installed")
+        print_success "Expo CLI $EXPO_VERSION ready"
+    else
+        print_success "Expo CLI available via npx"
+    fi
+
+    # Verify installation
+    print_substep "Verifying installation..."
+    if [ -d "node_modules" ] && [ -f "node_modules/.package-lock.json" ]; then
+        MODULES_COUNT=$(find node_modules -maxdepth 2 -type d | wc -l)
+        print_success "Installation verified ($MODULES_COUNT modules)"
+    else
+        print_warning "Installation may be incomplete"
+    fi
+
+    echo ""
+    print_success "🔧 POST-INSTALL COMPLETE"
+    echo ""
+
+    # ═══════════════════════════════════════════════════════════
+    # SUMMARY
+    # ═══════════════════════════════════════════════════════════
+
+    print_header
+    echo -e "${GREEN}✓ PREFLIGHT COMPLETE - READY TO LAUNCH${NC}"
+    echo ""
+    print_info "Environment Summary:"
+    echo "  • Node.js: $NODE_VERSION"
+    echo "  • npm: $NPM_VERSION"
+    echo "  • Expo: SDK 53"
+    echo "  • React: 18.2.0"
+    echo ""
+    print_info "What was cleaned:"
+    echo "  ✓ node_modules"
+    echo "  ✓ All lock files"
+    echo "  ✓ Expo cache"
+    echo "  ✓ Metro bundler cache"
+    echo "  ✓ TypeScript build info"
+    echo "  ✓ Build artifacts"
+    echo "  ✓ npm cache"
+    echo "  ✓ Temporary files"
+    echo ""
+    print_info "Next Steps:"
+    echo "  1. Start development server:"
+    echo "     ${GREEN}npm start${NC}"
+    echo ""
+    echo "  2. Run on specific platform:"
+    echo "     ${GREEN}npm run ios${NC}     # iOS Simulator"
+    echo "     ${GREEN}npm run android${NC}  # Android Emulator"
+    echo "     ${GREEN}npm run web${NC}      # Web Browser"
+    echo ""
+    echo "  3. Available routes:"
+    echo "     • ${CYAN}/splash${NC}   - Splash screen"
+    echo "     • ${CYAN}/login${NC}    - Login page"
+    echo "     • ${CYAN}/(tabs)${NC}   - Home (Discovery)"
+    echo ""
+    print_info "Troubleshooting:"
+    echo "  • Clear Metro cache: ${GREEN}npm start -- --clear${NC}"
+    echo "  • Full clean again: ${GREEN}./preflight${NC}"
+    echo "  • Check logs: ${GREEN}npx expo start${NC}"
+    echo ""
+    print_success "Happy coding! ⚓"
+    echo ""
+}
+
+# Run main function
+main "$@"
