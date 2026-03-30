@@ -30,10 +30,10 @@ npm run web           # Web Browser
 ### Troubleshooting
 
 ```bash
-# Nuclear option - reset everything
+# Nuclear option - deep clean and fresh install (recommended)
 ./preflight
 
-# Clear Metro cache
+# Quick clear Metro cache only
 npx expo start --clear
 
 # Clear watchman (if installed)
@@ -43,10 +43,22 @@ watchman watch-del-all
 xcrun simctl erase all
 xcrun simctl delete unavailable
 
-# Clean install
-rm -rf node_modules package-lock.json
+# Manual clean install (preflight does this automatically)
+rm -rf node_modules package-lock.json .expo
+npm cache clean --force
 npm install --legacy-peer-deps
 ```
+
+**What does `./preflight` clean?**
+- node_modules (with size shown)
+- All lock files
+- .expo cache
+- Metro bundler cache
+- TypeScript build artifacts
+- web-build, dist directories
+- iOS/Android build folders
+- npm cache
+- Temporary files
 
 ## Project Architecture
 

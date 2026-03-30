@@ -241,18 +241,29 @@ shared/ui/my-component/
 ## Commands
 
 ```bash
-# Setup
-./preflight
+# Setup (deep clean + fresh install)
+./preflight              # Like flutter clean && flutter pub get
 
 # Dev
-npm start
-npm run ios
-npm run android
-npm run web
+npm start                # Start dev server
+npm run ios              # iOS Simulator
+npm run android          # Android Emulator
+npm run web              # Web Browser
 
 # Troubleshoot
-npm start -- --clear
+npm start -- --clear     # Clear Metro cache only
+./preflight              # Full nuclear reset
 ```
+
+**What `./preflight` cleans:**
+- node_modules (368M shown)
+- Lock files
+- Expo cache
+- Metro cache
+- TypeScript builds
+- Build artifacts
+- npm cache
+- Temp files
 
 ---
 

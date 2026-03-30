@@ -6,18 +6,29 @@ High-performance trading suite combining prediction markets, traditional assets,
 
 ### Preflight Setup (Recommended)
 
-Run the automated setup script to install all dependencies and prepare the project:
+Run the automated setup script for deep clean and fresh install:
 
 ```bash
 ./preflight
 ```
 
-This will:
-- ✅ Check Node.js and npm installations
-- ✅ Clean old dependencies
-- ✅ Install all packages with correct peer dependencies
+**Like `flutter clean && flutter pub get`** - performs complete cleanup:
+
+**🧹 Deep Clean:**
+- ✅ Remove node_modules (shows size before removal)
+- ✅ Remove all lock files
+- ✅ Clear Expo cache
 - ✅ Clear Metro bundler cache
-- ✅ Verify project structure
+- ✅ Clear TypeScript build info
+- ✅ Clear web-build artifacts
+- ✅ Clear iOS/Android builds (if present)
+- ✅ Clear npm cache
+- ✅ Clear temporary files
+
+**📦 Fresh Install:**
+- ✅ Install dependencies with `--legacy-peer-deps`
+- ✅ Initialize Metro cache
+- ✅ Verify installation (shows module count)
 
 ### Manual Setup
 
